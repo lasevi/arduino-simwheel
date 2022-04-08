@@ -32,6 +32,7 @@ while True:
     try:
         value = float(input("give pwm value (-100 ... 100): "))
     except KeyboardInterrupt:
+        print()
         break
     setPwm(value)
 
