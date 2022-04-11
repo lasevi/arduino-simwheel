@@ -138,14 +138,14 @@ void loop() {
   Joystick.getForce(forces);
   if(forces[0] > 0){
     // Forward force
-    digitalWrite(BTS7960_L_EN_PIN, HIGH);
-    digitalWrite(BTS7960_R_EN_PIN, HIGH);
+    digitalWrite(BTS7960_L_EN_PIN, LOW);
     analogWrite(BTS7960_RPWM_PIN, abs(forces[0]));
+    digitalWrite(BTS7960_R_EN_PIN, HIGH);
   }else{
     // Reverse force
-    digitalWrite(BTS7960_R_EN_PIN, HIGH);
-    digitalWrite(BTS7960_L_EN_PIN, HIGH);
+    digitalWrite(BTS7960_R_EN_PIN, LOW);
     analogWrite(BTS7960_LPWM_PIN, abs(forces[0]));
+    digitalWrite(BTS7960_L_EN_PIN, HIGH);
   }
   // FORCE FEEDBACK
 
