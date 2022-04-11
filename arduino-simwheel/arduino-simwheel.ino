@@ -124,14 +124,10 @@ void loop() {
   #endif
 
   // FORCE FEEDBACK
-
-  myeffectparams[0].springMaxPosition = 1023;
   myeffectparams[0].springPosition = map(encoder_state,
       ENCODER_MIN_VALUE, ENCODER_MAX_VALUE,
       0, 1023
     );
-
-
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
   if(forces[0] > 0){
