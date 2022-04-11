@@ -5,10 +5,12 @@
 
 #define DEBUG false
 
-#define ENCODER_MAX_VALUE 2100
-#define ENCODER_MIN_VALUE -2100
 #define ENCODER_OUT_A_PIN 2
 #define ENCODER_OUT_B_PIN 3
+#define ENCODER_MAX_VALUE 2100
+#define ENCODER_MIN_VALUE -2100
+#define STEERING_AXIS_MIN_VALUE -512
+#define STEERING_AXIS_MAX_VALUE 511
 
 #define BTS7960_PWM_PIN 6
 #define BTS7960_R_EN_PIN 8
@@ -72,7 +74,7 @@ void setup() {
   Joystick.begin(AUTO_SEND_STATE);
 
   // ENCODER
-  Joystick.setSteeringRange(ENCODER_MIN_VALUE, ENCODER_MAX_VALUE);
+  Joystick.setSteeringRange(STEERING_AXIS_MIN_VALUE, STEERING_AXIS_MAX_VALUE);
 
   pinMode(ENCODER_OUT_A_PIN, INPUT_PULLUP);
   pinMode(ENCODER_OUT_B_PIN, INPUT_PULLUP);
@@ -107,8 +109,13 @@ void loop() {
     else if(encoder_state > ENCODER_MAX_VALUE){
       encoder_state = ENCODER_MAX_VALUE;
     }
-    encoder_previous_state = encoder_state; 
-    Joystick.setSteering(encoder_state);
+    encoder_previous_state = encoder_state;
+    
+    int steering_axis_value = map(encoder_state,
+      ENCODER_MIN_VALUE, ENCODER_MAX_VALUE,
+      -STEERING_AXIS_MIN_VALUE, STEERING_AXIS_MAX_VALUE
+    );
+    Joystick.setSteering(steering_axis_value);
     #if DEBUG
       Serial.println(encoder_state);
     #endif
