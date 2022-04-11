@@ -10,8 +10,7 @@
 #define ENCODER_OUT_A_PIN 2
 #define ENCODER_OUT_B_PIN 3
 
-#define BTS7960_RPWM_PIN 5
-#define BTS7960_LPWM_PIN 6
+#define BTS7960_PWM_PIN 6
 #define BTS7960_R_EN_PIN 8
 #define BTS7960_L_EN_PIN 9
 
@@ -80,20 +79,21 @@ void setup() {
 
   attachInterrupt(
     digitalPinToInterrupt(ENCODER_OUT_A_PIN),
-    encoder_out_A_change,
+    encoderOutAChange,
     CHANGE);
   attachInterrupt(
     digitalPinToInterrupt(ENCODER_OUT_B_PIN),
-    encoder_out_B_change,
+    encoderOutBChange,
     CHANGE);
   // ENCODER
 
   // BTS7960 MOTOR DRIVER
-  pinMode(BTS7960_RPWM_PIN, OUTPUT);
-  pinMode(BTS7960_LPWM_PIN, OUTPUT);
+  pinMode(BTS7960_PWM_PIN, OUTPUT);
   pinMode(BTS7960_R_EN_PIN, INPUT);
   pinMode(BTS7960_L_EN_PIN, INPUT);
   // BTS7960 MOTOR DRIVER
+
+  // TODO change PWM frequency to higher, not audible frequency
 
 }
 
@@ -124,13 +124,15 @@ void loop() {
   // Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
   if(forces[0] > 0){
-    // digitalWrite(6,LOW);
-    // digitalWrite(7,HIGH);
-    analogWrite(9,abs(forces[0]));
+    // Forward force
+    digitalWrite(BTS7960_L_EN_PIN, LOW);
+    digitalWrite(BTS7960_R_EN_PIN, HIGH);
+    analogWrite(BTS7960_PWM_PIN, abs(forces[0]));
   }else{
-    // digitalWrite(6,HIGH);
-    // digitalWrite(7,LOW);
-    analogWrite(9,abs(forces[0]));
+    // Reverse force
+    digitalWrite(BTS7960_R_EN_PIN, LOW);
+    digitalWrite(BTS7960_L_EN_PIN, HIGH);
+    analogWrite(BTS7960_PWM_PIN, abs(forces[0]));
   }
   // FORCE FEEDBACK
 
