@@ -18,7 +18,7 @@
 
 
 
-
+// Both X and Y axis need to be active for FFB to work, I recall.
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID, // hidReportId
   JOYSTICK_TYPE_JOYSTICK, // joystickType
@@ -91,6 +91,9 @@ void setup() {
   pinMode(BTS7960_LPWM_PIN, OUTPUT);
   pinMode(BTS7960_R_EN_PIN, OUTPUT);
   pinMode(BTS7960_L_EN_PIN, OUTPUT);
+  // TODO set enablers high
+  digitalWrite(BTS7960_R_EN_PIN, HIGH);
+  digitalWrite(BTS7960_L_EN_PIN, HIGH);
   // BTS7960 MOTOR DRIVER
 
   // FFB gains
@@ -131,15 +134,13 @@ void loop() {
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
   if(forces[0] > 0){
-    // Forward force
-    digitalWrite(BTS7960_L_EN_PIN, LOW);
+    // Forward force (R)
     analogWrite(BTS7960_RPWM_PIN, abs(forces[0]));
-    digitalWrite(BTS7960_R_EN_PIN, HIGH);
+    analogWrite(BTS7960_LPWM_PIN, 0);
   }else{
-    // Reverse force
-    digitalWrite(BTS7960_R_EN_PIN, LOW);
+    // Reverse force (L)
+    analogWrite(BTS7960_RPWM_PIN, 0);
     analogWrite(BTS7960_LPWM_PIN, abs(forces[0]));
-    digitalWrite(BTS7960_L_EN_PIN, HIGH);
   }
   // FORCE FEEDBACK
 
