@@ -42,7 +42,6 @@ Joystick_ Joystick(
 //Note: not every pin is usable for interrupts!
 //You need to connect the signal wires to pins which are usable for interrupts: Micro, Leonardo, other 32u4-based: 0, 1, 2, 3, 7
 volatile int32_t encoder_state = 0; // volatile is using RAM this is because we will use interrupts
-int32_t encoder_previous_state = 0;
 
 // FFB
 Gains mygains[2];
@@ -79,12 +78,14 @@ void setPwmDutyCycle(int pin, int duty_cycle){
 
 
 void encoderOutAChange() {
+  if(encoder_state == ENCODER_MAX_VALUE) return;  // Saturation
   // when outA changes, outA==outB means negative direction
   encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? -1 : 1; 
 }
 
 
 void encoderOutBChange() {
+  if(encoder_state == ENCODER_MIN_VALUE) return;  // Saturation
   // when outB changes, outA==outB means positive direction
   encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? 1 : -1;
 }
@@ -133,15 +134,6 @@ void setup() {
 
 void loop() {
   // ENCODER & STEERING AXIS
-  if (encoder_previous_state != encoder_state) {
-    if(encoder_state < ENCODER_MIN_VALUE){
-      encoder_state = ENCODER_MIN_VALUE;
-    }
-    else if(encoder_state > ENCODER_MAX_VALUE){
-      encoder_state = ENCODER_MAX_VALUE;
-    }
-    encoder_previous_state = encoder_state;
-  }
   Joystick.setXAxis(encoder_state);
   Joystick.setYAxis(0);
   // ENCODER & STEERING AXIS
