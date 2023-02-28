@@ -3,7 +3,7 @@
 #include <Joystick.h>
 
 
-#define DEBUG true
+#define DEBUG false
 #define AUTO_SEND_STATE false
 
 #define ENCODER_OUT_A_PIN 2
@@ -77,17 +77,26 @@ void setPwmDutyCycle(int pin, int duty_cycle){
 }
 
 
+void encoderSaturation() {
+  if(encoder_state > ENCODER_MAX_VALUE){
+    encoder_state = ENCODER_MAX_VALUE;
+  }
+  else if(encoder_state < ENCODER_MIN_VALUE){
+    encoder_state = ENCODER_MIN_VALUE;
+  }
+}
+
 void encoderOutAChange() {
-  if(encoder_state == ENCODER_MAX_VALUE) return;  // Saturation
   // when outA changes, outA==outB means negative direction
-  encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? -1 : 1; 
+  encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? -1 : 1;
+  encoderSaturation();
 }
 
 
 void encoderOutBChange() {
-  if(encoder_state == ENCODER_MIN_VALUE) return;  // Saturation
   // when outB changes, outA==outB means positive direction
   encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? 1 : -1;
+  encoderSaturation();
 }
 
 
