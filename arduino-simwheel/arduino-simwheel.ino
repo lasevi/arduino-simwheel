@@ -150,15 +150,16 @@ void loop() {
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
 
+  uint8_t ffbPWM = map(abs(forces[0]), 0,  255, 0, ICR1);
 
-  if(forces[0] > 0){
+  if(forces[0] >= 0){
     // Forward force (R)
-    analogWrite(BTS7960_RPWM_PIN, abs(forces[0]));
-    analogWrite(BTS7960_LPWM_PIN, 0);
+    setPwmDutyCycle(BTS7960_RPWM_PIN, ffbPWM);
+    setPwmDutyCycle(BTS7960_LPWM_PIN, 0);
   }else{
     // Reverse force (L)
-    analogWrite(BTS7960_RPWM_PIN, 0);
-    analogWrite(BTS7960_LPWM_PIN, abs(forces[0]));
+    setPwmDutyCycle(BTS7960_RPWM_PIN, 0);
+    setPwmDutyCycle(BTS7960_LPWM_PIN, ffbPWM);
   }
   // FORCE FEEDBACK
 
