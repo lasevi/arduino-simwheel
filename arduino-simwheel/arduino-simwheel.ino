@@ -10,6 +10,7 @@
 #define ENCODER_OUT_B_PIN 3
 #define ENCODER_MAX_VALUE 2100
 #define ENCODER_MIN_VALUE -2100
+#define ENCODER_RANGE ENCODER_MAX_VALUE - ENCODER_MIN_VALUE
 
 #define BTS7960_RPWM_PIN 9
 #define BTS7960_LPWM_PIN 10
@@ -121,7 +122,7 @@ void setup() {
   mygains[0].totalGain = 100;//0-100
   mygains[0].springGain = 100;//0-100
   Joystick.setGains(mygains);
-  myeffectparams[0].springMaxPosition = 1023;
+  myeffectparams[0].springMaxPosition = ENCODER_RANGE;
   Joystick.setEffectParams(myeffectparams);
   Joystick.begin(AUTO_SEND_STATE);
 
@@ -153,7 +154,7 @@ void loop() {
   // FORCE FEEDBACK
   myeffectparams[0].springPosition = map(encoder_state,
       ENCODER_MIN_VALUE, ENCODER_MAX_VALUE,
-      0, 1023
+      0, ENCODER_RANGE
     );
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
