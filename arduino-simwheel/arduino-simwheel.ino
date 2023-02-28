@@ -11,10 +11,8 @@
 #define ENCODER_MAX_VALUE 2100
 #define ENCODER_MIN_VALUE -2100
 
-#define BTS7960_RPWM_PIN 5
-#define BTS7960_LPWM_PIN 6
-#define BTS7960_R_EN_PIN 8
-#define BTS7960_L_EN_PIN 9
+#define BTS7960_RPWM_PIN 9
+#define BTS7960_LPWM_PIN 10
 
 
 
@@ -52,6 +50,33 @@ int32_t forces[2] = {0};
 
 
 
+void setPwmFrequency(){
+  // Set-up hardware PWM on the Arduino UNO/Pro Micro on digital pins D9 and D10
+  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);  // Enable PWM outputs for OC1A and OC1B on digital pins 9, 10
+  //TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);   // Set fast PWM and prescaler of 8 on timer 1
+  //ICR1 = 999;                                     // Set the PWM frequency to 2kHz (16MHz / (8 * (999 + 1)))
+  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);     // Set fast PWM and prescaler of 1 on timer 1
+  ICR1 = 800;                                       // Set the PWM frequency to 20kHz (16MHz / (1 * (799 + 1)))
+  OCR1A = 0;                                        // Set duty-cycle to 0% on D9
+  OCR1B = 0.5*ICR1;                                 // Set duty-cycle to 50% on D10
+}
+
+
+void setPwmDutyCycle(int pin, int duty_cycle){
+  /*
+    I got some strange behaviour with analogWrite and ICR1 799.
+    It's like duty cycle rises too slowly first and jumps to 100% at the end.
+    I suspect analogWrite only works on when ICR1 is the default value (255?).
+   */
+  if(pin == 9){
+    OCR1A = duty_cycle;
+  }
+  if(pin == 10){
+    OCR1B = duty_cycle;
+  }
+}
+
+
 void encoderOutAChange() {
   // when outA changes, outA==outB means negative direction
   encoder_state += digitalRead(ENCODER_OUT_A_PIN) == digitalRead(ENCODER_OUT_B_PIN) ? -1 : 1; 
@@ -76,6 +101,7 @@ void setup() {
   pinMode(ENCODER_OUT_A_PIN, INPUT);
   pinMode(ENCODER_OUT_B_PIN, INPUT);
 
+  // TODO I could set CHANGE to RISING to halve the amount of interrupts called
   attachInterrupt(
     digitalPinToInterrupt(ENCODER_OUT_A_PIN),
     encoderOutAChange,
@@ -89,20 +115,18 @@ void setup() {
   // BTS7960 MOTOR DRIVER
   pinMode(BTS7960_RPWM_PIN, OUTPUT);
   pinMode(BTS7960_LPWM_PIN, OUTPUT);
-  pinMode(BTS7960_R_EN_PIN, OUTPUT);
-  pinMode(BTS7960_L_EN_PIN, OUTPUT);
-  // TODO set enablers high
-  digitalWrite(BTS7960_R_EN_PIN, HIGH);
-  digitalWrite(BTS7960_L_EN_PIN, HIGH);
   // BTS7960 MOTOR DRIVER
 
-  // FFB gains
+  // FFB gains & joystick init
   mygains[0].totalGain = 100;//0-100
   mygains[0].springGain = 100;//0-100
   Joystick.setGains(mygains);
   myeffectparams[0].springMaxPosition = 1023;
   Joystick.setEffectParams(myeffectparams);
   Joystick.begin(AUTO_SEND_STATE);
+
+  // MISC
+  setPwmFrequency();
 }
 
 
@@ -133,6 +157,8 @@ void loop() {
     );
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
+
+
   if(forces[0] > 0){
     // Forward force (R)
     analogWrite(BTS7960_RPWM_PIN, abs(forces[0]));
