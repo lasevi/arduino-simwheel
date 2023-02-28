@@ -103,7 +103,6 @@ void setup() {
   pinMode(ENCODER_OUT_A_PIN, INPUT);
   pinMode(ENCODER_OUT_B_PIN, INPUT);
 
-  // TODO I could set CHANGE to RISING to halve the amount of interrupts called
   attachInterrupt(
     digitalPinToInterrupt(ENCODER_OUT_A_PIN),
     encoderOutAChange,
