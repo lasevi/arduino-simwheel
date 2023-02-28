@@ -16,6 +16,9 @@
 #define BTS7960_LPWM_PIN 10
 
 
+#define THROTTLE_POTENTIOMETER_PIN A0
+#define BRAKE_POTENTIOMETER_PIN A1
+
 
 // Both X and Y axis need to be active for FFB to work, I recall.
 Joystick_ Joystick(
@@ -30,9 +33,9 @@ Joystick_ Joystick(
   false, // includeRyAxis
   false, // includeRzAxis
   false, // includeRudder
-  false, // includeThrottle
+  true,  // includeThrottle
   false, // includeAccelerator
-  false, // includeBrake
+  true,  // includeBrake
   false  // includeSteering
 ); 
 
@@ -127,13 +130,21 @@ void setup() {
   pinMode(BTS7960_LPWM_PIN, OUTPUT);
   // BTS7960 MOTOR DRIVER
 
-  // FFB gains & joystick init
+  // FFB setup
   mygains[0].totalGain = 100;//0-100
   mygains[0].springGain = 100;//0-100
   Joystick.setGains(mygains);
   myeffectparams[0].springMaxPosition = ENCODER_RANGE;
   Joystick.setEffectParams(myeffectparams);
+
+  // Pedals
+  pinMode(THROTTLE_POTENTIOMETER_PIN, INPUT);
+  pinMode(BRAKE_POTENTIOMETER_PIN, INPUT);
+
+  // Joystick setup
   Joystick.begin(AUTO_SEND_STATE);
+
+  
 
   // MISC
   setPwmFrequency();
@@ -159,15 +170,17 @@ void loop() {
   Joystick.setEffectParams(myeffectparams);
   Joystick.getForce(forces);
 
+  // Scale the -255...255 force to the PWM value range
+  int ffbPWM = map(abs(forces[0]), 0,  255, 0, ICR1);
 
   if(forces[0] > 0){
     // Forward force (R)
-    analogWrite(BTS7960_RPWM_PIN, abs(forces[0]));
+    analogWrite(BTS7960_RPWM_PIN, ffbPWM);
     analogWrite(BTS7960_LPWM_PIN, 0);
   }else{
     // Reverse force (L)
     analogWrite(BTS7960_RPWM_PIN, 0);
-    analogWrite(BTS7960_LPWM_PIN, abs(forces[0]));
+    analogWrite(BTS7960_LPWM_PIN, ffbPWM);
   }
   // FORCE FEEDBACK
 
