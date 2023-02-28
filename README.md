@@ -25,3 +25,4 @@ Wheel PCB pinout, start from the 45deg cut:
 - pin6
   - Vdd (Vcc) (3...15V)
   - grey wire
+The wheel PCB has 3x HEF4021BT 8 bit PISO shift registers.
