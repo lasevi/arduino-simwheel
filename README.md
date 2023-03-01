@@ -54,3 +54,5 @@ The wheel PCB has 3x HEF4021BT 8 bit PISO shift registers.
   - white wire
 
 The led has three terminals, and the middle one is tied to GND (pin3).
+
+The motor has a 50kOhm thermistor.
