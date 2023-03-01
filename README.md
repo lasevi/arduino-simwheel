@@ -67,7 +67,7 @@ It's a simple (supposedly 24V) power supply.
 - And a 2220uF 35V filter capasitor on the output.
 
 If it's the same/similar PSU that the T300rs or T500rs have it's prone to overheating:
-- The optocoupler dies when exposed to heat
 - The PSU's internal resistance goes up which decreases output power and increases heat even more
+- The optocoupler dies when exposed to heat => the whole PSU stops working
 
 => I need appropriate cooling for this part.
