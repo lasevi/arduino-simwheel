@@ -136,27 +136,37 @@ void setup() {
   Joystick.setGains(mygains);
   myeffectparams[0].springMaxPosition = ENCODER_RANGE;
   Joystick.setEffectParams(myeffectparams);
+  // FFB setup
 
   // Pedals
   pinMode(THROTTLE_POTENTIOMETER_PIN, INPUT);
   pinMode(BRAKE_POTENTIOMETER_PIN, INPUT);
+  Joystick.setThrottleRange(0, 1023);  // Same range as the potentiometer
+  Joystick.setBrakeRange(0, 1023);
+  // Pedals
 
   // Joystick setup
   Joystick.begin(AUTO_SEND_STATE);
-
-  
+  // Joystick setup
 
   // MISC
   setPwmFrequency();
+  // MISC
 }
 
 
 void loop() {
   // ENCODER & STEERING AXIS
   Joystick.setXAxis(encoder_state);
-  Joystick.setYAxis(0);
+  // Joystick.setYAxis(0);  // Not used
   // ENCODER & STEERING AXIS
-  
+
+  // THROTTLE & BRAKE AXIS
+  uint16_t throttle = analogRead(THROTTLE_POTENTIOMETER_PIN);
+  uint16_t brake = analogRead(BRAKE_POTENTIOMETER_PIN);
+  Joystick.setThrottle(throttle);
+  Joystick.setBrake(brake);
+  // THROTTLE & BRAKE AXIS
 
   #if !AUTO_SEND_STATE
     Joystick.sendState();
