@@ -52,3 +52,5 @@ The wheel PCB has 3x HEF4021BT 8 bit PISO shift registers.
 - pin7
   - L3_BTN (no pullup)
   - white wire
+
+The led has three terminals, and the middle one is tied to GND (pin3).
