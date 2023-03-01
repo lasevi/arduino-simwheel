@@ -56,3 +56,18 @@ The wheel PCB has 3x HEF4021BT 8 bit PISO shift registers.
 The led has three terminals, and the middle one is tied to GND (pin3).
 
 The motor has a 50kOhm thermistor.
+
+### PSU
+It's a simple (supposedly 24V) power supply.
+
+- Optocoupler controlled by a 5V input signal that turns the PSU on when pulled high.
+- The octocoupler drives a simple triac.
+- It has a simple transformer.
+- Then it has a simple full bridge rectifier built with separate diodes.
+- And a 2220uF 35V filter capasitor on the output.
+
+If it's the same/similar PSU that the T300rs or T500rs have it's prone to overheating:
+- The optocoupler dies when exposed to heat
+- The PSU's internal resistance goes up which decreases output power and increases heat even more
+
+=> I need appropriate cooling for this part.
