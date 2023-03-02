@@ -58,6 +58,7 @@ void asyncReadWheelButtons(){
     // Skip the first 8 bits, they are not useful.
     // The first bits just statically output something, I guess
     // it's the steering wheel ID or revision or something like that.
+    wheel_serial_bit_index++;
     return;
   }
 
@@ -106,7 +107,7 @@ void loop() {
   whole_read_operation_time += execution_time;
 
   // Prints
-  if(wheel_serial_bit_index == SHIFT_REGISTER_BITS-1){
+  if(wheel_serial_bit_index == SHIFT_REGISTER_BITS){
     Serial.println();
     Serial.print("time:");
     Serial.print(execution_time);
@@ -122,7 +123,5 @@ void loop() {
       }
     #endif
   }
-
-  wheel_serial_bit_index++;
   delay(5);
 }
