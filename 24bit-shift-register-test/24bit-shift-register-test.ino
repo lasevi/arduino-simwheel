@@ -9,7 +9,7 @@ All of the added delay adds lag and decreases the sample rate.
 
 #define DEBUG true
 
-#define SHIFT_REG_Q_PIN 8  // Shift register serial output
+#define SHIFT_REG_DATA_PIN 8  // Shift register serial output
 #define SHIFT_REG_PL_PIN 6 // PL, parallel load input (pin9 on the HEF4021BT)
 #define SHIFT_REG_CP_PIN 4 // CP, clock input, (pin10 on the HEF4021BT)
 
@@ -31,29 +31,38 @@ uint8_t wheel_serial_bit_index = 0;
 
 unsigned long whole_read_operation_time = 0;
 
-void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadPin, uint8_t *bit_index){
-  if(*bit_index == SHIFT_REGISTER_BITS){
-    *bit_index = 0;
+void asyncReadWheelButtons(){
+  /*
+  * This reads one button per function call, so it
+  *   takes SHIFT_REGISTER_BITS times to read all buttons.
+  *
+  * I made this to reduce read latency from ~14ms to <1ms,
+  *   compared to reading all values at once.
+  */
+  if(wheel_serial_bit_index == SHIFT_REGISTER_BITS){
+    wheel_serial_bit_index = 0;
     #if DEBUG
       serial_data = 0;
     #endif
     // Close the latch, switch to serial mode
-    digitalWrite(paralLoadPin, 0);
+    digitalWrite(SHIFT_REG_PL_PIN, LOW);
     delayMicroseconds(SHIFT_REG_PL_WAIT_MICROSECONDS);
   }
   
-  digitalWrite(clockPin, HIGH);
-  uint16_t current_bit = digitalRead(dataPin);
-  digitalWrite(clockPin, LOW);
-  //Joystick.setButton(*bit_index, !current_bit)
+  // Pulse the clock and read a bit
+  digitalWrite(SHIFT_REG_CP_PIN, HIGH);
+  uint16_t current_bit = digitalRead(SHIFT_REG_DATA_PIN);
+  digitalWrite(SHIFT_REG_CP_PIN, LOW);
 
-  if(*bit_index < 8){
-    // Skip the first 8 bits, they are not useful
+  if(wheel_serial_bit_index < 8){
+    // Skip the first 8 bits, they are not useful.
+    // The first bits just statically output something, I guess
+    // it's the steering wheel ID or revision or something like that.
     return;
   }
 
-  // And save the bits after that
-  uint8_t button_index = *bit_index - 8;
+  // And save the bits after the 8th bit
+  uint8_t button_index = wheel_serial_bit_index - 8;
 
   // Set the buttons, they are pressed when low
   //Joystick.setButton(button_index, !current_bit)
@@ -65,18 +74,19 @@ void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadP
     }
   #endif
 
-  if(*bit_index == SHIFT_REGISTER_BITS-1){
+  if(wheel_serial_bit_index == SHIFT_REGISTER_BITS-1){
     // Next loop I need to latch new values
-    // Open the latch already now
-    digitalWrite(paralLoadPin, 1);
+    // Opening the latch at this time saves a tiny amount of time #premature-optimization
+    digitalWrite(SHIFT_REG_PL_PIN, HIGH);
   }
+  wheel_serial_bit_index++;
 }
 
 
 void setup() {
   pinMode(SHIFT_REG_PL_PIN, OUTPUT);
   pinMode(SHIFT_REG_CP_PIN, OUTPUT);
-  pinMode(SHIFT_REG_Q_PIN, INPUT);
+  pinMode(SHIFT_REG_DATA_PIN, INPUT);
 
   Serial.begin(9600);
 }
@@ -88,12 +98,7 @@ void loop() {
     whole_read_operation_time = 0;
   }
 
-  asyncReadWheelButtons(
-      SHIFT_REG_Q_PIN,
-      SHIFT_REG_CP_PIN,
-      SHIFT_REG_PL_PIN,
-      &wheel_serial_bit_index
-    );
+  asyncReadWheelButtons();
 
   // Timer
   unsigned long end_time = millis();
