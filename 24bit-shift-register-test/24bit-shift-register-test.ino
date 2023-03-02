@@ -12,11 +12,7 @@ All of the added delay adds lag and decreases the sample rate.
 #define PL_pin 6 // PL, parallel load input (pin9 on the HEF4021BT)
 #define CP_pin 4 // CP, clock input, (pin10 on the HEF4021BT)
 
-
-uint8_t shiftregister1 = 0;
-uint8_t shiftregister2 = 0;
-uint8_t shiftregister3 = 0;
-
+uint8_t count = 0;
 
 void setup() {
   pinMode(PL_pin, OUTPUT);
@@ -33,18 +29,26 @@ void loop() {
   digitalWrite(PL_pin,0);
   delay(20);
   
-
+  uint8_t pressed_count = 0;
   // Read all the 3 8bit shift registers
-  shiftregister1 = shiftIn(Q_pin, CP_pin, MSBFIRST);
-  shiftregister2 = shiftIn(Q_pin, CP_pin, MSBFIRST);
-  shiftregister3 = shiftIn(Q_pin, CP_pin, MSBFIRST);
+  uint32_t shiftregisters = shiftIn(Q_pin, CP_pin, MSBFIRST) <<16;
+  shiftregisters |= shiftIn(Q_pin, CP_pin, MSBFIRST) <<8;
+  shiftregisters |= shiftIn(Q_pin, CP_pin, MSBFIRST);
 
-  Serial.print(shiftregister1, BIN);
+  for(int i=0;i<16;i++){
+    uint32_t selector_bit = 1 << i;
+    uint32_t selected_bit = shiftregisters & selector_bit;
+    if(selected_bit > 0){
+      Serial.print(0);
+    }else{
+      Serial.print(1);
+      pressed_count++;
+    }
+  }
   Serial.print(" ");
-  Serial.print(shiftregister2, BIN);
-  Serial.print(" ");
-  Serial.print(shiftregister3, BIN);
+  Serial.print(pressed_count);
   Serial.println();
+  count++;
   delay(50);
 }
 
