@@ -13,7 +13,8 @@ All of the added delay adds lag and decreases the sample rate.
 #define CP_pin 4 // CP, clock input, (pin10 on the HEF4021BT)
 
 
-#define CLOCK_PULSE_MICROSECONDS 30
+#define CLOCK_PULSE_MICROSECONDS 0  // For some reason this works?
+#define PARALLEL_LOAD_WAIT_MICROSECONDS 400
 #define SHIFT_REGISTER_BITS 24
 
 uint8_t wheel_serial_bit_index = 0;
@@ -29,7 +30,13 @@ void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadP
     serial_data = 0;
     // Close the latch, switch to serial mode
     digitalWrite(paralLoadPin, 0);
-    delayMicroseconds(1000);
+    // Seems to work with 500us
+    // Works with 400us
+    // Works with 350us
+    // Well, works-ish with 300us, but one button oscillates
+    // Corrupts at 200us, buttons missing and weird behaviour
+    // 400us it is, for safety?
+    delayMicroseconds(PARALLEL_LOAD_WAIT_MICROSECONDS);
   }
   
   uint16_t current_bit = oneBitShiftIn(dataPin, clockPin);
@@ -91,10 +98,8 @@ void loop() {
     if(buttons_confirmed_to_work == 0b111111111111111){
       Serial.print(", all!");
     }
-    delay(0);
   }
   wheel_serial_bit_index++;
-  //Serial.print(execution_time);
   delay(1);
 }
 
