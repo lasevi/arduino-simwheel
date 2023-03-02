@@ -12,7 +12,54 @@ All of the added delay adds lag and decreases the sample rate.
 #define PL_pin 6 // PL, parallel load input (pin9 on the HEF4021BT)
 #define CP_pin 4 // CP, clock input, (pin10 on the HEF4021BT)
 
-uint8_t count = 0;
+
+#define CLOCK_PULSE_MICROSECONDS 500
+#define SHIFT_REGISTER_BITS 24
+
+uint8_t wheel_serial_bit_index = 0;
+
+uint16_t serial_data = 0;
+
+uint16_t buttons_confirmed_to_work = 0;
+
+void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadPin, uint8_t *bit_index){
+  if(*bit_index == SHIFT_REGISTER_BITS){
+    *bit_index = 0;
+    serial_data = 0;
+    // Latch new values
+    digitalWrite(paralLoadPin, 1);
+    delay(1);  // Is this enough or too much?
+    digitalWrite(paralLoadPin, 0);
+    //delay(1);  // Is this enough or too much?
+    // Serial.println();
+  }
+  
+  delay(1);  // Is this enough or too much?
+  uint16_t current_bit = oneBitShiftIn(dataPin, clockPin);
+  delay(1);  // Is this enough or too much?
+  //Joystick.setButton(*bit_index, !current_bit)
+
+  if(*bit_index >= 8){
+    // Skip the first 8 bits and save the bits after that
+    serial_data |= current_bit << *bit_index - 8;
+    if(!current_bit){
+      buttons_confirmed_to_work |= 1 << *bit_index - 8;
+    }
+  }
+}
+
+uint8_t oneBitShiftIn(uint8_t dataPin, uint8_t clockPin){
+    delay(1);  // Is this enough or too much?
+  delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
+  digitalWrite(clockPin, HIGH);
+    delay(1);  // Is this enough or too much?
+  delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
+  uint8_t value = digitalRead(dataPin);
+    delay(1);  // Is this enough or too much?
+  digitalWrite(clockPin, LOW);
+  return value;
+}
+
 
 void setup() {
   pinMode(PL_pin, OUTPUT);
@@ -23,33 +70,30 @@ void setup() {
 }
 
 void loop() {
-  // Load the parallel values to the registers
-  digitalWrite(PL_pin,1);
-  delay(20);
-  digitalWrite(PL_pin,0);
-  delay(20);
-  
-  uint8_t pressed_count = 0;
-  // Read all the 3 8bit shift registers
-  uint32_t shiftregisters = shiftIn(Q_pin, CP_pin, MSBFIRST) <<16;
-  shiftregisters |= shiftIn(Q_pin, CP_pin, MSBFIRST) <<8;
-  shiftregisters |= shiftIn(Q_pin, CP_pin, MSBFIRST);
+  unsigned long start_time = millis();
+ 
+  asyncReadWheelButtons(Q_pin, CP_pin, PL_pin, &wheel_serial_bit_index);
 
-  for(int i=0;i<16;i++){
-    uint32_t selector_bit = 1 << i;
-    uint32_t selected_bit = shiftregisters & selector_bit;
-    if(selected_bit > 0){
-      Serial.print(0);
-    }else{
-      Serial.print(1);
-      pressed_count++;
+  unsigned long end_time = millis();
+  unsigned long execution_time = end_time - start_time;
+  if(wheel_serial_bit_index == SHIFT_REGISTER_BITS-1){
+    Serial.println();
+    Serial.println();
+    Serial.println();
+    Serial.print("time:");
+    Serial.print(execution_time);
+    Serial.print(" data:");
+    Serial.print(serial_data, BIN);
+    Serial.print(" confirmed:");
+    Serial.print(buttons_confirmed_to_work, BIN);
+    if(buttons_confirmed_to_work == 0b111111111111111){
+      Serial.print(", all!");
     }
+    Serial.println();
   }
-  Serial.print(" ");
-  Serial.print(pressed_count);
-  Serial.println();
-  count++;
-  delay(50);
+  wheel_serial_bit_index++;
+  Serial.print(execution_time);
+  delay(1);
 }
 
 
@@ -59,9 +103,8 @@ uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
   uint8_t value = 0;
   uint8_t i;
   for (i = 0; i < 8; ++i) {
-    delay(1);  // @lasevi, Needed to add these delays
     digitalWrite(clockPin, HIGH);
-    delay(1);  // @lasevi, Needed to add these delays
+    delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
     if (bitOrder == LSBFIRST)
       value |= digitalRead(dataPin) << i;
     else
