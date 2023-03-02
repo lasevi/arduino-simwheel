@@ -13,7 +13,7 @@ All of the added delay adds lag and decreases the sample rate.
 #define CP_pin 4 // CP, clock input, (pin10 on the HEF4021BT)
 
 
-#define CLOCK_PULSE_MICROSECONDS 500
+#define CLOCK_PULSE_MICROSECONDS 30
 #define SHIFT_REGISTER_BITS 24
 
 uint8_t wheel_serial_bit_index = 0;
@@ -21,22 +21,18 @@ uint8_t wheel_serial_bit_index = 0;
 uint16_t serial_data = 0;
 
 uint16_t buttons_confirmed_to_work = 0;
+unsigned long whole_read_operation_time = 0;
 
 void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadPin, uint8_t *bit_index){
   if(*bit_index == SHIFT_REGISTER_BITS){
     *bit_index = 0;
     serial_data = 0;
-    // Latch new values
-    digitalWrite(paralLoadPin, 1);
-    delay(1);  // Is this enough or too much?
+    // Close the latch, switch to serial mode
     digitalWrite(paralLoadPin, 0);
-    //delay(1);  // Is this enough or too much?
-    // Serial.println();
+    delayMicroseconds(1000);
   }
   
-  delay(1);  // Is this enough or too much?
   uint16_t current_bit = oneBitShiftIn(dataPin, clockPin);
-  delay(1);  // Is this enough or too much?
   //Joystick.setButton(*bit_index, !current_bit)
 
   if(*bit_index >= 8){
@@ -46,16 +42,18 @@ void asyncReadWheelButtons(uint8_t dataPin, uint8_t clockPin, uint8_t paralLoadP
       buttons_confirmed_to_work |= 1 << *bit_index - 8;
     }
   }
+  if(*bit_index == SHIFT_REGISTER_BITS-1){
+    // Next loop I need to latch new values
+    // Open the latch already now
+    digitalWrite(paralLoadPin, 1);
+  }
 }
 
 uint8_t oneBitShiftIn(uint8_t dataPin, uint8_t clockPin){
-    delay(1);  // Is this enough or too much?
-  delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
+  //delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
   digitalWrite(clockPin, HIGH);
-    delay(1);  // Is this enough or too much?
   delayMicroseconds(CLOCK_PULSE_MICROSECONDS);  // @lasevi, Needed to add this delay
   uint8_t value = digitalRead(dataPin);
-    delay(1);  // Is this enough or too much?
   digitalWrite(clockPin, LOW);
   return value;
 }
@@ -71,17 +69,21 @@ void setup() {
 
 void loop() {
   unsigned long start_time = millis();
+  if(wheel_serial_bit_index == 1){
+    whole_read_operation_time = 0;
+  }
  
   asyncReadWheelButtons(Q_pin, CP_pin, PL_pin, &wheel_serial_bit_index);
 
   unsigned long end_time = millis();
   unsigned long execution_time = end_time - start_time;
+  whole_read_operation_time += execution_time;
   if(wheel_serial_bit_index == SHIFT_REGISTER_BITS-1){
-    Serial.println();
-    Serial.println();
     Serial.println();
     Serial.print("time:");
     Serial.print(execution_time);
+    Serial.print(" wholetime:");
+    Serial.print(whole_read_operation_time);
     Serial.print(" data:");
     Serial.print(serial_data, BIN);
     Serial.print(" confirmed:");
@@ -89,10 +91,10 @@ void loop() {
     if(buttons_confirmed_to_work == 0b111111111111111){
       Serial.print(", all!");
     }
-    Serial.println();
+    delay(0);
   }
   wheel_serial_bit_index++;
-  Serial.print(execution_time);
+  //Serial.print(execution_time);
   delay(1);
 }
 
