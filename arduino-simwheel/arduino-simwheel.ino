@@ -15,16 +15,19 @@
 #define BTS7960_RPWM_PIN 9
 #define BTS7960_LPWM_PIN 10
 
-
 #define THROTTLE_POTENTIOMETER_PIN A0
 #define BRAKE_POTENTIOMETER_PIN A1
+
+#define SHIFT_REG_Q_PIN 8  // Shift register serial output
+#define SHIFT_REG_PL_PIN 6 // PL, parallel load input (pin9 on the HEF4021BT)
+#define SHIFT_REG_CP_PIN 4 // CP, clock input, (pin10 on the HEF4021BT)
 
 
 // Both X and Y axis need to be active for FFB to work, I recall.
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID, // hidReportId
   JOYSTICK_TYPE_JOYSTICK, // joystickType
-  0, // buttonCount
+  16, // buttonCount
   0, // hatSwitchCount
   true, // includeXAxis
   true, // includeYAxis 
@@ -78,6 +81,47 @@ void setPwmDutyCycle(int pin, int duty_cycle){
     OCR1B = duty_cycle;
   }
 }
+
+
+void readWheelButtons() {
+  // Load the parallel values to the registers
+  digitalWrite(SHIFT_REG_PL_PIN,1);
+  delay(20);  // Delay to load the values
+  digitalWrite(SHIFT_REG_PL_PIN,0);
+  delay(20);  // Delay after loading and before reading - unecessary?
+
+  // Read all the 3 8bit shift registers
+  uint32_t shiftregisters = shiftIn(SHIFT_REG_Q_PIN, SHIFT_REG_CP_PIN, MSBFIRST) <<16;
+  shiftregisters |= shiftIn(SHIFT_REG_Q_PIN, SHIFT_REG_CP_PIN, MSBFIRST) <<8;
+  shiftregister3 |= shiftIn(SHIFT_REG_Q_PIN, SHIFT_REG_CP_PIN, MSBFIRST);
+
+  // Set the values to the joystick buttons
+  // The only the last 16 (15?) bits are used.
+  for(int i=0;i<16;i++){
+    uint32_t selector_bit = 1 << i;
+    Joystick.setButton(i, selector_bit);
+  }
+}
+
+
+
+uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
+  // Arduino Default shiftIn function, edited by lasevi
+  uint8_t value = 0;
+  uint8_t i;
+  for (i = 0; i < 8; ++i) {
+    delay(1);  // @lasevi, Needed to add these delays
+    digitalWrite(clockPin, HIGH);
+    delay(1);  // @lasevi, Needed to add these delays
+    if (bitOrder == LSBFIRST)
+      value |= digitalRead(dataPin) << i;
+    else
+      value |= digitalRead(dataPin) << (7 - i);
+    digitalWrite(clockPin, LOW);
+  }
+  return value;
+}
+
 
 
 void encoderSaturation() {
