@@ -8,9 +8,9 @@ All of the added delay adds lag and decreases the sample rate.
 */
 
 
-#define PL_pin 14 // PL, parallel load input (pin9 on the HEF4021BT)
-#define CP_pin 15 // CP, clock input, (pin10 on the HEF4021BT)
-#define Q_pin 16  // Shift register serial output
+#define Q_pin 8  // Shift register serial output
+#define PL_pin 6 // PL, parallel load input (pin9 on the HEF4021BT)
+#define CP_pin 4 // CP, clock input, (pin10 on the HEF4021BT)
 
 
 uint8_t shiftregister1 = 0;
@@ -44,8 +44,6 @@ void loop() {
   Serial.print(shiftregister2, BIN);
   Serial.print(" ");
   Serial.print(shiftregister3, BIN);
-  Serial.print(" ");
-  Serial.print(count);
   Serial.println();
   delay(50);
 }
