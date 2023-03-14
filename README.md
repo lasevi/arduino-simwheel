@@ -1,10 +1,12 @@
- # raspi-BTS7960
+ # Arduino simwheel from a dead Thrustmaster T150 wheel
+ I had the electronics already, so why wouldn't I do this?
  
- ## T150
- Enkooderin pinout:
- - Harmaa=GND
- - Punanen=5V
- - Sininen&ruskia=signaali
+ ## Device pinouts
+ 
+ ### Encoder
+ - Grey=GND
+ - Red=5V
+ - Blue&Brown=Signal
  
 ### Wheel PCB pinout, start from the 45deg cut:
 - pin1
