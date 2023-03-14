@@ -1,5 +1,5 @@
  # Arduino simwheel from a dead Thrustmaster T150 wheel
- I had the electronics already, so why wouldn't I do this?
+ I had the electronics already, so why wouldn't I resurrect my old wheel and have some fun?
  
  ## Device pinouts
  
