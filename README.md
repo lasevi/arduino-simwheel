@@ -5,6 +5,7 @@ This repository contains the necessary code and information to resurrect a dead 
 To replicate this project, you will need the following components:
 - Arduino Leonardo/Pro Micro (or a similar device with an Atmega32u4 processor)
 - T150 or any other simulator wheel with a force feedback motor and encoder
+- [ArduinoJoystickWithFFBLibrary](https://github.com/YukMingLaw/ArduinoJoystickWithFFBLibrary) for joystick & force feedback functionality
 - Motor driver (BTS7960 was used in this project)
 - Patience
 
